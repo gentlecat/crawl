@@ -74,6 +74,16 @@ func (i *indexType) AddItem(keyword string, item IndexItem) {
 	i.mutex.Unlock()
 }
 
+func (i *indexType) GetItem(keyword string) []IndexItem {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
+	if _, ok := i.mapping[keyword]; ok {
+		return i.mapping[keyword]
+	} else {
+		return make([]IndexItem, 0)
+	}
+}
+
 func (i *indexType) Length() int {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
