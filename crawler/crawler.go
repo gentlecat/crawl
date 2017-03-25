@@ -1,8 +1,13 @@
 package crawler
 
 import (
-	"go.roman.zone/crawl/parser"
+	"bytes"
+	"go.roman.zone/crawl/crawler/classifier"
+	"go.roman.zone/crawl/crawler/html_cleaner"
+	"go.roman.zone/crawl/crawler/parser"
+	"go.roman.zone/crawl/index"
 	"log"
+	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -24,6 +29,9 @@ var (
 	duplicateCount  = 0
 	ignoredCount    = 0
 	countLock       sync.Mutex
+
+	// TODO: Move this into a command line arg:
+	topic_keywords = []string{"git"}
 )
 
 func Crawl(seedPage url.URL, targetCount int) []url.URL {
@@ -56,7 +64,11 @@ func Crawl(seedPage url.URL, targetCount int) []url.URL {
 
 	crawlQueue.Push(seedPage)
 
-	wg.Wait()
+	//wg.Wait()
+	time.Sleep(1 * time.Minute)
+
+	index.Index.Export(index.STORAGE_FILE)
+
 	return getRetrievedURLs()
 }
 
@@ -72,6 +84,8 @@ func getRetrievedURLs() []url.URL {
 	return crawledPageURLs
 }
 
+// TODO: Allow to pass a function for processing the pages. In the case of the final
+// project we need to pass a page for topic checking and indexing (done separately).
 func crawlPage(pageURL url.URL, workerID int) {
 	countLock.Lock()
 	if crawlCountTotal%100 == 0 {
@@ -82,6 +96,7 @@ func crawlPage(pageURL url.URL, workerID int) {
 	}
 	crawlCountTotal++
 	countLock.Unlock()
+
 	if isCrawled(pageURL) {
 		return
 	} else {
@@ -89,6 +104,7 @@ func crawlPage(pageURL url.URL, workerID int) {
 		crawledPages[pageURL] = true
 		crawlMapLock.Unlock()
 	}
+
 	// Checking their robots.txt file. If error occurs then it's probably
 	// fine to crawl anyway. 🤷
 	shouldCrawl, err := ShouldCrawl(pageURL)
@@ -102,30 +118,57 @@ func crawlPage(pageURL url.URL, workerID int) {
 		countLock.Unlock()
 		return
 	}
-	urls, err := parser.GetAllURLs(pageURL)
+
+	// Retrieving the page, parsing, etc.
+	pageContent, err := GetPage(pageURL)
 	crawlMapLock.Lock()
 	retrievedPages[pageURL] = true
 	crawlMapLock.Unlock()
 	if err != nil {
 		log.Printf("Worker %d: Failed to crawl page %s: %s\n",
 			workerID, pageURL.String(), err)
+		return
+	}
+	linksToQueue(pageContent) // extracting links before indexing to not slow down the process
+	if classifier.IsTopical(html_cleaner.Clean(pageContent), topic_keywords) {
+		index.ProcessPage(index.Page{URL: pageURL, Content: pageContent})
+	}
+}
+
+// linksToQueue does link extraction from an HTML page and puts all uncrawled
+// URLs into the crawl queue.
+func linksToQueue(pageContent string) {
+	urls, err := parser.GetAllURLs(pageContent)
+	if err != nil {
+		log.Printf("Failed to extract links: %s\n", err)
+		return
 	}
 	for _, u := range urls {
-		if isCrawled(pageURL) {
-			return
+		if !isCrawled(u) {
+			crawlQueue.Push(u)
 		}
-		crawlQueue.Push(u)
 	}
 }
 
 func isCrawled(pageURL url.URL) bool {
 	crawlMapLock.Lock()
-	isCrawled, notFound := crawledPages[pageURL]
+	isCrawled, found := crawledPages[pageURL]
 	crawlMapLock.Unlock()
-	if !(!notFound && isCrawled) {
+	if found && isCrawled {
 		countLock.Lock()
 		duplicateCount++
 		countLock.Unlock()
 	}
-	return !notFound && isCrawled
+	return found && isCrawled
+}
+
+func GetPage(pageURL url.URL) (string, error) {
+	resp, err := http.Get(pageURL.String())
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	return buf.String(), nil
 }
