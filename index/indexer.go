@@ -9,6 +9,8 @@ import (
 
 const (
 	KEYWORD_EXCLUDE_REGEX = "[^\\w]"
+
+	STORAGE_FILE = "index.csv"
 )
 
 var (
