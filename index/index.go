@@ -2,9 +2,16 @@ package index
 
 import (
 	"encoding/csv"
+	"errors"
+	"log"
 	"net/url"
 	"os"
 	"sync"
+)
+
+var (
+	ErrMissingIndex   = errors.New("can't find the index file")
+	ErrIndexFileIsDir = errors.New("index file is a directory")
 )
 
 // Since there's no Queue type in Go, we can just use this. Kind of hacky, but
@@ -22,13 +29,33 @@ type IndexItem struct {
 	URL url.URL
 }
 
-func NewIndex() *indexType {
-	return &indexType{
-		mapping: make(map[string][]IndexItem, 0),
+func NewIndex(filename string) *indexType {
+	index, err := importFromFile(filename)
+	if err != nil {
+		if err == ErrMissingIndex {
+			return &indexType{
+				mapping: make(map[string][]IndexItem, 0),
+			}
+		} else {
+			log.Fatal(err)
+		}
 	}
+	return index
 }
 
-func Import(filename string) (*indexType, error) {
+func importFromFile(filename string) (*indexType, error) {
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrMissingIndex
+		} else {
+			return nil, err
+		}
+	}
+	if fileInfo.IsDir() {
+		return nil, ErrIndexFileIsDir
+	}
+
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err

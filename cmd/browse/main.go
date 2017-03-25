@@ -17,10 +17,6 @@ var (
 )
 
 func main() {
-	idx, err := index.Import(index.STORAGE_FILE)
-	check(err)
-	index.Index = idx
-
 	listenAddr := fmt.Sprintf("%s:%d", *listenHost, *listenPort)
 	log.Printf("Starting server on %s...\n", listenAddr)
 	check(http.ListenAndServe(listenAddr, makeRouter()))

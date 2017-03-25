@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	Index = NewIndex()
+	Index = NewIndex(STORAGE_FILE)
 )
 
 type Page struct {
