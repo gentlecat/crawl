@@ -1,4 +1,4 @@
-package cleaner
+package html_cleaner
 
 import "testing"
 

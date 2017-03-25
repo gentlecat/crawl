@@ -1,4 +1,4 @@
-package cleaner
+package html_cleaner
 
 // Clean cleans up HTML page for further processing.
 //
