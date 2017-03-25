@@ -1,32 +1,25 @@
 package parser
 
 import (
+	"bytes"
 	"errors"
 	"golang.org/x/net/html"
-	"log"
-	"net/http"
 	"net/url"
 	"strings"
 )
 
-// GetAllURLs retrieves all URLs from a page (`pageURL`).
-func GetAllURLs(pageURL url.URL) ([]url.URL, error) {
+// GetAllURLs retrieves all URLs from an HTML page.
+func GetAllURLs(pageContent string) ([]url.URL, error) {
 	var urls []url.URL
 
-	resp, err := http.Get(pageURL.String())
-	if err != nil {
-		return urls, err
-	}
-	defer resp.Body.Close()
-
-	z := html.NewTokenizer(resp.Body)
+	tokenizer := html.NewTokenizer(bytes.NewReader([]byte(pageContent)))
 	for {
-		tt := z.Next()
+		tt := tokenizer.Next()
 		switch {
 		case tt == html.ErrorToken:
 			return urls, nil
 		case tt == html.StartTagToken:
-			t := z.Token()
+			t := tokenizer.Token()
 			isAnchor := t.Data == "a"
 			if !isAnchor {
 				continue
