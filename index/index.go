@@ -34,7 +34,9 @@ func Import(filename string) (*indexType, error) {
 		return nil, err
 	}
 	defer f.Close()
-	lines, err := csv.NewReader(f).ReadAll()
+	csvReader := csv.NewReader(f)
+	csvReader.FieldsPerRecord = -1 // We have variable number of fields, so no need to do checking
+	lines, err := csvReader.ReadAll()
 	if err != nil {
 		return nil, err
 	}
