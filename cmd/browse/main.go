@@ -44,11 +44,7 @@ func queryHandler(w http.ResponseWriter, r *http.Request) {
 	itemsRanked := make(map[index.IndexItem]int)
 
 	for _, item := range items {
-		if _, ok := itemsRanked[item]; ok {
-			itemsRanked[item]++
-		} else {
-			itemsRanked[item] = 1
-		}
+		itemsRanked[item]++
 	}
 
 	results := make(SearchResults, len(itemsRanked))
