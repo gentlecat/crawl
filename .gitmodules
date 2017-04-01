@@ -1,0 +1,9 @@
+[submodule "vendor/github.com/temoto/robotstxt"]
+	path = vendor/github.com/temoto/robotstxt
+	url = https://github.com/temoto/robotstxt.git
+[submodule "vendor/github.com/gorilla/mux"]
+	path = vendor/github.com/gorilla/mux
+	url = https://github.com/gorilla/mux.git
+[submodule "vendor/golang.org/x/net"]
+	path = vendor/golang.org/x/net
+	url = https://github.com/golang/net.git
