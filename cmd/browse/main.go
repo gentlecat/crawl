@@ -65,7 +65,7 @@ func queryHandler(w http.ResponseWriter, r *http.Request) {
 		i++
 	}
 
-	b, err := json.Marshal(resultsOut)
+	b, err := json.MarshalIndent(resultsOut, "", "  ")
 	if err != nil {
 		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		log.Println(err)
