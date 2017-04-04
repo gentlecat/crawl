@@ -68,7 +68,6 @@ func GetRobotsData(host string) (*robotstxt.RobotsData, error) {
 		robotsURL.Scheme = "http"
 		resp, err = httpClient.Get(robotsURL.String())
 		if err != nil {
-			log.Printf("Couldn't retrieve robots.txt from %s", host)
 			robotsCacheMutex.Lock()
 			robotsDataCache[host] = noData
 			robotsCacheMutex.Unlock()
