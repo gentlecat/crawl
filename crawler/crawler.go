@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"sync"
 	"time"
+	"fmt"
 )
 
 const (
@@ -29,12 +30,9 @@ var (
 	duplicateCount  = 0
 	ignoredCount    = 0
 	countLock       sync.Mutex
-
-	// TODO: Move this into a command line arg:
-	topic_keywords = []string{"git"}
 )
 
-func Crawl(seedPage url.URL, targetCount int) []url.URL {
+func Crawl(seedPage url.URL, topicKeywords []string, targetCount int, timeLimit time.Duration) []url.URL {
 	wg := new(sync.WaitGroup)
 
 	for i := 0; i <= WORKER_COUNT; i++ {
@@ -55,20 +53,24 @@ func Crawl(seedPage url.URL, targetCount int) []url.URL {
 					wg.Done()
 					return
 				}
-				crawlPage(nextURL, id)
-
+				crawlPage(nextURL, id, topicKeywords)
 			}
 			wg.Done()
 		}(i + 1)
 	}
 
+	// Starting the process...
 	crawlQueue.Push(seedPage)
 
-	//wg.Wait()
-	time.Sleep(1 * time.Minute)
+	if timeLimit > 0 {
+		time.Sleep(timeLimit)
+	fmt.Println("Time limit has been reached. Stopping crawling.")
+	} else {
+		wg.Wait()
+		fmt.Println("No more pages to crawl. Either limit has been reached or crawl queue is empty.")
+	}
 
 	index.Index.Export(index.STORAGE_FILE)
-
 	return getRetrievedURLs()
 }
 
@@ -86,7 +88,7 @@ func getRetrievedURLs() []url.URL {
 
 // TODO: Allow to pass a function for processing the pages. In the case of the final
 // project we need to pass a page for topic checking and indexing (done separately).
-func crawlPage(pageURL url.URL, workerID int) {
+func crawlPage(pageURL url.URL, workerID int, topicKeywords []string) {
 	countLock.Lock()
 	if crawlCountTotal%100 == 0 {
 		crawlMapLock.Lock()
@@ -130,7 +132,7 @@ func crawlPage(pageURL url.URL, workerID int) {
 		return
 	}
 	linksToQueue(pageContent) // extracting links before indexing to not slow down the process
-	if classifier.IsTopical(html_cleaner.Clean(pageContent), topic_keywords) {
+	if classifier.IsTopical(html_cleaner.Clean(pageContent), topicKeywords) {
 		index.ProcessPage(index.Page{URL: pageURL, Content: pageContent})
 	}
 }
