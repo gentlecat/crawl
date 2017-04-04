@@ -12,12 +12,13 @@ import (
 // would be a good idea to remove all the tags and do some other kind of
 // processing, if necessary.
 func IsTopical(pageContent string, keywords []string) bool {
+	pageContent = strings.ToUpper(pageContent)
+	// Also converting both page content strings and keywords to
+	// make the search case insensitive.
 	for _, keyword := range keywords {
-		// Also converting both page content strings and keywords to
-		// make the search case insensitive.
-		if strings.Contains(strings.ToUpper(pageContent), strings.ToUpper(keyword)) {
-			return true
+		if !strings.Contains(pageContent, strings.ToUpper(keyword)) {
+			return false
 		}
 	}
-	return false
+	return true
 }
