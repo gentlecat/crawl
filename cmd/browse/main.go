@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 )
 
 var (
@@ -32,17 +33,20 @@ func makeRouter() *mux.Router {
 }
 
 func queryHandler(w http.ResponseWriter, r *http.Request) {
-	queries := r.URL.Query()
-	query, ok := queries["q"]
-	if !ok {
+	keywords := strings.Split(r.URL.Query().Get("q"), ",")
+	if len(keywords) < 1 {
 		http.Error(w, "No query", http.StatusBadRequest)
 		return
 	}
-	queryStr := query[0]
 
-	items := index.Index.GetItem(queryStr)
+	items := make([]index.IndexItem, 0)
+	for _, keyword := range keywords {
+		// Retrieving items for every keyword
+		items = append(items, index.Index.GetItems(strings.ToLower(keyword))...)
+	}
+
+	// Raking items by how often they appear
 	itemsRanked := make(map[index.IndexItem]int)
-
 	for _, item := range items {
 		itemsRanked[item]++
 	}
