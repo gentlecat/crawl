@@ -76,14 +76,8 @@ func queryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	callback, ok := queries["callback"]
-	if ok {
-		w.Header().Set("Content-Type", "application/javascript")
-		fmt.Fprintf(w, "%s(%s)", callback[0], b)
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(b)
-	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
 }
 
 type SearchResultOutput struct {
