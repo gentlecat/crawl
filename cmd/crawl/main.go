@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	seedURL     = flag.String("seed", "https://roman.zone", "URL of the page to retrieve")
+	seedURL     = flag.String("seed", "https://example.com", "URL of the page to use as a seed")
 	targetCount = flag.Int("index-target", 1000, "Number of unique pages to index")
 )
 
