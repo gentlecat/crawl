@@ -13,7 +13,7 @@ import (
 
 var (
 	seedURL     = flag.String("seed", "https://example.com", "URL of the page to use as a seed")
-	keywordsStr    = flag.String("keywords", "", "Comma-separated list of keywords that define a topic")
+	keywordsStr = flag.String("keywords", "", "Comma-separated list of keywords that define a topic")
 	targetCount = flag.Int("index-target", 1000, "Number of unique pages to index")
 	timeLimit   = flag.Duration("time-limit", 0, "Maximum time the crawler should run for")
 )

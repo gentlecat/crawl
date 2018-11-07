@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"bytes"
+	"fmt"
 	"go.roman.zone/crawl/crawler/classifier"
 	"go.roman.zone/crawl/crawler/html_cleaner"
 	"go.roman.zone/crawl/crawler/parser"
@@ -11,7 +12,6 @@ import (
 	"net/url"
 	"sync"
 	"time"
-	"fmt"
 )
 
 const (
@@ -64,7 +64,7 @@ func Crawl(seedPage url.URL, topicKeywords []string, targetCount int, timeLimit 
 
 	if timeLimit > 0 {
 		time.Sleep(timeLimit)
-	fmt.Println("Time limit has been reached. Stopping crawling.")
+		fmt.Println("Time limit has been reached. Stopping crawling.")
 	} else {
 		wg.Wait()
 		fmt.Println("No more pages to crawl. Either limit has been reached or crawl queue is empty.")
